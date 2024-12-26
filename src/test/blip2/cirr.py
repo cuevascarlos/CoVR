@@ -7,6 +7,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from tqdm import tqdm
+
 from src.tools.files import json_dump
 from src.tools.utils import concat_all_gather
 
@@ -25,7 +27,7 @@ class TestCirr:
 
         vl_feats = []
         pair_ids = []
-        for batch in data_loader:
+        for batch in tqdm(data_loader):
             ref_img = batch["ref_img"]
             caption = batch["edit"]
             pair_id = batch["pair_id"]
@@ -81,7 +83,7 @@ class TestCirr:
             assert len(img_ids) == len(pair_ids)
 
             id2emb = OrderedDict()
-            for img_id, target_emb_pth in data_loader.dataset.id2embpth.items():
+            for img_id, target_emb_pth in tqdm(data_loader.dataset.id2embpth.items()):
                 if img_id not in id2emb:
                     tar_emb = F.normalize(
                         torch.load(target_emb_pth, weights_only=True).cpu(), dim=-1
@@ -95,7 +97,7 @@ class TestCirr:
             # Process in batches to avoid memory issues
             batch_size = 100
             sims_q2t = []
-            for i in range(0, vl_feats.size(0), batch_size):
+            for i in tqdm(range(0, vl_feats.size(0), batch_size)):
                 vl_feats_batch = vl_feats[i : i + batch_size]
                 sim_batch = torch.einsum("iqe,jke->ijqk", vl_feats_batch, tar_feats)
                 sims_q2t.append(sim_batch)
@@ -111,7 +113,7 @@ class TestCirr:
             tarid2index = {tar_id: j for j, tar_id in enumerate(id2emb.keys())}
 
             # Update the similarity matrix based on the condition
-            for pair_id in pair_ids:
+            for pair_id in tqdm(pair_ids):
                 que_id = data_loader.dataset.pairid2ref[pair_id]
                 if que_id in tarid2index:
                     sims_q2t[pairid2index[pair_id], tarid2index[que_id]] = -100
@@ -132,7 +134,7 @@ class TestCirr:
             target_imgs = np.array(list(id2emb.keys()))
 
             assert len(sims_q2t) == len(pair_ids)
-            for pair_id, query_sims in zip(pair_ids, sims_q2t):
+            for pair_id, query_sims in tqdm(zip(pair_ids, sims_q2t)):
                 sorted_indices = np.argsort(query_sims)[::-1]
 
                 query_id_recalls = list(target_imgs[sorted_indices][:50])
