@@ -133,33 +133,6 @@ class TestCirr:
                     if target in members
                 ][:3]
                 recalls_subset[str(pair_id)] = query_id_recalls_subset
-            # Compute Recall@K
-            paird2target = {
-                ann["pairid"]: ann["target_hard"]
-                for ann in data_loader.dataset.annotation
-            }
-            for k in [1, 5, 10, 50]:
-                r = 0
-                for pair_id, query_id_recalls in recalls.items():
-                    r += paird2target[int(pair_id)] in query_id_recalls[:k]
-                r /= len(recalls)
-                fabric.print(f"Recall@{k}: {r*100:.2f}")
-
-            # Compute Recall_subset@K
-            paird2target_soft = {
-                ann["pairid"]: ann["target_soft"]
-                for ann in data_loader.dataset.annotation
-            }
-            for k in [1, 2, 3]:
-                r = 0
-                for pair_id, query_id_recalls_subset in recalls_subset.items():
-                    highest_r = 0.0
-                    for ii, ss in paird2target_soft[int(pair_id)].items():
-                        if ii in query_id_recalls_subset[:k]:
-                            highest_r = max(highest_r, ss)
-                    r += highest_r
-                r /= len(recalls_subset)
-                fabric.print(f"Recall_subset@{k}: {r*100:.2f}")
 
             json_dump(recalls, "recalls_cirr.json")
             json_dump(recalls_subset, "recalls_cirr_subset.json")
