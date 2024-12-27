@@ -95,7 +95,7 @@ class TestCirr:
 
             # sims_q2t = torch.einsum("iqe,jke->ijqk", vl_feats, tar_feats)
             # Process in batches to avoid memory issues
-            batch_size = 100
+            batch_size = 32
             sims_q2t = []
             for i in tqdm(range(0, vl_feats.size(0), batch_size)):
                 vl_feats_batch = vl_feats[i : i + batch_size]
