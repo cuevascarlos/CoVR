@@ -157,7 +157,7 @@ class CIRRDataset(Dataset):
 
         if split == "train":
             img_pths = self.img_dir.glob("*/*.png")
-            emb_pths = self.emb_dir.glob("*/*.pth")
+            emb_pths = self.emb_dir.glob("*.pth")
         else:
             img_pths = self.img_dir.glob("*.png")
             emb_pths = self.emb_dir.glob("*.pth")
