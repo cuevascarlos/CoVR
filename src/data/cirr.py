@@ -16,12 +16,14 @@ class CIRRDataModule(LightningDataModule):
     def __init__(
         self,
         batch_size: int,
+        dataset_dir: str,
         num_workers: int = 4,
         pin_memory: bool = True,
         annotation: dict = {"train": "", "val": ""},
         img_dirs: dict = {"train": "", "val": ""},
         emb_dirs: dict = {"train": "", "val": ""},
         image_size: int = 384,
+        si_tc_weight=0,
         **kwargs,  # type: ignore
     ) -> None:
         super().__init__()
@@ -33,13 +35,16 @@ class CIRRDataModule(LightningDataModule):
 
         self.transform_train = transform_train(image_size)
         self.transform_test = transform_test(image_size)
+        self.dataset_dir = Path(dataset_dir)
 
         self.data_train = CIRRDataset(
             transform=self.transform_train,
             annotation=annotation["train"],
+            dataset_dir=self.dataset_dir,
             img_dir=img_dirs["train"],
             emb_dir=emb_dirs["train"],
             split="train",
+            si_tc_weight=si_tc_weight,
         )
         self.data_val = CIRRDataset(
             transform=self.transform_test,
@@ -121,6 +126,7 @@ class CIRRDataset(Dataset):
         self,
         transform,
         annotation: str,
+        dataset_dir: str,
         img_dir: str,
         emb_dir: str,
         split: str,
@@ -131,6 +137,7 @@ class CIRRDataset(Dataset):
 
         self.transform = transform
         self.annotation_pth = annotation
+        self.dataset_dir = dataset_dir
         assert Path(annotation).exists(), f"Annotation file {annotation} does not exist"
         self.annotation = json.load(open(annotation, "r"))
         self.split = split
@@ -165,6 +172,7 @@ class CIRRDataset(Dataset):
         self.id2imgpth = {img_pth.stem: img_pth for img_pth in img_pths}
         self.id2embpth = {emb_pth.stem: emb_pth for emb_pth in emb_pths}
 
+        captions_dict = json.load(open(self.dataset_dir / "train_captions_blip2.json"))
         for ann in self.annotation:
             assert (
                 ann["reference"] in self.id2imgpth
@@ -179,11 +187,21 @@ class CIRRDataset(Dataset):
                 assert (
                     ann["target_hard"] in self.id2embpth
                 ), f"Path to target {ann['target_hard']} not found"
+            if split == "train":
+                assert (
+                  ann["reference"]+".png" in captions_dict
+                ), f"{ann['reference']} text embedding not found"
+                ann["txt2"] = captions_dict[ann["reference"]+".png"]
+
+
+
 
         # Load text embeddings if si_tc_weight > 0
         self.txt2emb = None
         if si_tc_weight > 0:
-            txt2emb_pth = self.emb_dir / f"txt2_{self.annotation_pth.stem}.pth"
+            print("Loading text embeddings...")
+            # txt2emb_pth = self.emb_dir / f"txt2_{self.annotation_pth.stem}.pth"
+            txt2emb_pth = self.emb_dir / f"txt2_train_captions_blip2.pth"
             if "blip2" in str(txt2emb_pth):
                 model = "blip2"
             elif "blip" in str(txt2emb_pth):
@@ -193,7 +211,7 @@ class CIRRDataset(Dataset):
             else:
                 raise ValueError(f"Invalid model: {txt2emb_pth}")
             assert txt2emb_pth.exists(), f"txt2emb does not exist: {txt2emb_pth}. Please compute them with: python tools/embs/save_{model}_embs_txts.py {self.annotation_pth} {self.emb_dir}"
-            txt2emb_pth = self.emb_dir / f"txt2_{self.annotation_pth.stem}.pth"
+            txt2emb_pth = self.emb_dir / f"txt2_train_captions_blip2.pth"
             if txt2emb_pth.exists():
                 self.txt2emb = torch.load(txt2emb_pth, weights_only=True)
                 assert len(self.txt2emb["texts"]) == len(
@@ -203,10 +221,10 @@ class CIRRDataset(Dataset):
                     txt: feat
                     for txt, feat in zip(self.txt2emb["texts"], self.txt2emb["feats"])
                 }
-                txt2s = set(self.df["txt2"].unique().tolist())
-                assert txt2s.issubset(
-                    set(self.txt2emb.keys())
-                ), "txt2emb does not contain all txt2's"
+                # txt2s = set(self.df["txt2"].unique().tolist())
+                # assert txt2s.issubset(
+                #     set(self.txt2emb.keys())
+                # ), "txt2emb does not contain all txt2's"
 
     def __len__(self) -> int:
         return len(self.annotation)

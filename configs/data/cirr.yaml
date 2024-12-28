@@ -4,6 +4,7 @@ _target_: src.data.cirr.CIRRDataModule
 # Paths
 dataset_dir: ${paths.datasets_dir}/CIRR
 
+si_tc_weight: ${model.loss_terms.si_tc_weight}
 batch_size: ${machine.batch_size}
 num_workers: ${machine.num_workers}
 
