@@ -125,6 +125,7 @@ class CIRRDataset(Dataset):
         emb_dir: str,
         split: str,
         max_words: int = 30,
+        si_tc_weight = 0,
     ) -> None:
         super().__init__()
 
@@ -178,6 +179,34 @@ class CIRRDataset(Dataset):
                 assert (
                     ann["target_hard"] in self.id2embpth
                 ), f"Path to target {ann['target_hard']} not found"
+
+        # Load text embeddings if si_tc_weight > 0
+        self.txt2emb = None
+        if si_tc_weight > 0:
+            txt2emb_pth = self.emb_dir / f"txt2_{self.annotation_pth.stem}.pth"
+            if "blip2" in str(txt2emb_pth):
+                model = "blip2"
+            elif "blip" in str(txt2emb_pth):
+                model = "blip"
+            elif "clip" in str(txt2emb_pth):
+                model = "clip"
+            else:
+                raise ValueError(f"Invalid model: {txt2emb_pth}")
+            assert txt2emb_pth.exists(), f"txt2emb does not exist: {txt2emb_pth}. Please compute them with: python tools/embs/save_{model}_embs_txts.py {self.annotation_pth} {self.emb_dir}"
+            txt2emb_pth = self.emb_dir / f"txt2_{self.annotation_pth.stem}.pth"
+            if txt2emb_pth.exists():
+                self.txt2emb = torch.load(txt2emb_pth, weights_only=True)
+                assert len(self.txt2emb["texts"]) == len(
+                    self.txt2emb["feats"]
+                ), "txt2emb is not valid"
+                self.txt2emb = {
+                    txt: feat
+                    for txt, feat in zip(self.txt2emb["texts"], self.txt2emb["feats"])
+                }
+                txt2s = set(self.df["txt2"].unique().tolist())
+                assert txt2s.issubset(
+                    set(self.txt2emb.keys())
+                ), "txt2emb does not contain all txt2's"
 
     def __len__(self) -> int:
         return len(self.annotation)
