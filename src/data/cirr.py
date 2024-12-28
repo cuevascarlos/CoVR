@@ -237,4 +237,7 @@ class CIRRDataset(Dataset):
             "pair_id": ann["pairid"],
         }
 
+        if self.txt2emb is not None:
+            return_dict["tar_txt_feat"] = self.txt2emb[ann["txt2"]]
+
         return return_dict
