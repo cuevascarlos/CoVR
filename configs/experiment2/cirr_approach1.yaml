@@ -1,0 +1,24 @@
+# @package _global_
+
+defaults:
+  - override /data: cirr.yaml
+  - override /test: cirr.yaml
+  - override /model: blip2-coco-approach1.yaml
+  - override /model/ckpt: blip2-l-coco.yaml
+  - override /model/loss_terms: si_ti
+
+machine:
+  batch_size: 64
+
+model:
+  optimizer:
+    lr: 1e-4
+
+trainer:
+  devices: 1
+  max_epochs: 1
+  save_ckpt: last
+
+
+val: False
+run_name: base
