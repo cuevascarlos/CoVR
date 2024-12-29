@@ -126,10 +126,10 @@ class CIRRDataset(Dataset):
         self,
         transform,
         annotation: str,
-        dataset_dir: str,
         img_dir: str,
         emb_dir: str,
         split: str,
+        dataset_dir: str="",
         max_words: int = 30,
         si_tc_weight = 0,
     ) -> None:
@@ -171,8 +171,10 @@ class CIRRDataset(Dataset):
             emb_pths = self.emb_dir.glob("*.pth")
         self.id2imgpth = {img_pth.stem: img_pth for img_pth in img_pths}
         self.id2embpth = {emb_pth.stem: emb_pth for emb_pth in emb_pths}
-
-        captions_dict = json.load(open(self.dataset_dir / "train_captions_blip2.json"))
+        
+        captions_dict = None
+        if split == "train":
+            captions_dict = json.load(open(f"{self.dataset_dir}/train_captions_blip2.json"))
         for ann in self.annotation:
             assert (
                 ann["reference"] in self.id2imgpth
