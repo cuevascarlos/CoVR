@@ -102,9 +102,10 @@ class BLIP2Cir(Blip2Base):
             p.requires_grad = False
 
         # Define parameter weights for embeddings linear combination
-        self.embedding_combination = nn.Linear(3, 1, bias=False)
-        nn.init.constant_(self.embedding_combination.weight, 0.33)
-        self.embedding_combination.weight.requires_grad = True
+        # self.embedding_combination = nn.Linear(3, 1, bias=False)
+        # nn.init.constant_(self.embedding_combination.weight, 0.33)
+        self.embedding_combination = nn.Parameter(torch.zeros(3))  # Initialize weights as parameters
+        # self.embedding_combination.weight.requires_grad = True
         self.lambda_reg = lambda_reg
 
         assert si_ti_weight + si_tc_weight > 0, "No loss term is enabled"
@@ -186,15 +187,15 @@ class BLIP2Cir(Blip2Base):
         text_si_feat = F.normalize(self.text_emb_proj(txt_emb), dim=-1)
         text_embs = all_gather_with_grad(text_si_feat, fabric)
         text_embs = text_embs.mean(dim=1)
-        print(f"visual_embs: {visual_embs.shape}")
-        print(f"text_embs: {text_embs.shape}")
-        print(f"query_si_feat: {query_si_feat.shape}")
+        # print(f"visual_embs: {visual_embs.shape}")
+        # print(f"text_embs: {text_embs.shape}")
+        # print(f"query_si_feat: {query_si_feat.shape}")
 
         weights = F.softmax(self.embedding_combination, dim=0)
         combined_embedding = (query_si_feat * weights[0] +
                       visual_embs * weights[1] +
                       text_embs * weights[2])
-        print(f"combined_embedding: {combined_embedding.shape}")
+        # print(f"combined_embedding: {combined_embedding.shape}")
         output_embeddings = combined_embedding
         # print(f"output_embeddings: {output_embeddings.shape}")
         # combined_embedding = torch.stack([query_si_feat, visual_embs, text_embs], dim=-1)
