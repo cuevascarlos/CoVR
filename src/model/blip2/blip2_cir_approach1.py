@@ -86,6 +86,8 @@ class BLIP2Cir(Blip2Base):
         self.vision_proj = nn.Linear(self.Qformer.config.hidden_size, embed_dim)
         self.text_proj = nn.Linear(self.Qformer.config.hidden_size, embed_dim)
 
+        self.visual_emb_proj = nn.Linear(self.visual_encoder.num_features, embed_dim)
+        self.text_emb_proj = nn.Linear(self.Qformer.config.hidden_size, embed_dim)
         self.temp = temperature
 
         self.max_txt_len = max_txt_len
@@ -114,10 +116,10 @@ class BLIP2Cir(Blip2Base):
         Penalization for weights in loss function:
         """
         # weights >= 0
-        positive_penalty = torch.sum(torch.abs(torch.min(self.weight_layer.weight, torch.tensor(0.0, device=self.weight_layer.weight.device))))
+        positive_penalty = torch.sum(torch.abs(torch.min(self.embedding_combination.weight, torch.tensor(0.0, device=self.embedding_combination.weight.device))))
 
         # To sum 1
-        weight_sum = self.weight_layer.weight.sum(dim=1)
+        weight_sum = self.embedding_combination.weight.sum()
         normalization_penalty = torch.abs(weight_sum - 1).sum()
         return positive_penalty + normalization_penalty
 
@@ -179,8 +181,11 @@ class BLIP2Cir(Blip2Base):
 
         # Weighted embedding combination (multimodal, visual, text)
         # Make text embeddings and image embeddings the same size as multimodal embeddings
-        visual_embs = self.vision_proj(ref_img_embs.mean(dim=1))
-        text_embs = self.text_proj(text_tokens.input_ids).mean(dim=1)
+        visual_embs = self.visual_emb_proj(ref_img_embs.mean(dim=1))
+        txt_emb = output.last_hidden_state[:,query_tokens.size(1):, :]
+        text_si_feat = F.normalize(self.text_emb_proj(txt_emb), dim=-1)
+        text_embs = all_gather_with_grad(text_si_feat, fabric)
+        text_embs = text_embs.mean(dim=1)
         print(f"visual_embs: {visual_embs.shape}")
         print(f"text_embs: {text_embs.shape}")
         print(f"query_si_feat: {query_si_feat.shape}")
