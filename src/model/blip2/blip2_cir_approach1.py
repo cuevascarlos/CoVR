@@ -216,7 +216,8 @@ class BLIP2Cir(Blip2Base):
             loss += si_tc_loss * self.si_tc_weight
             
         # loss += self.regularization_loss()
-        weights = self.embedding_combination.weight.detach().cpu().numpy()
+        # weights = self.embedding_combination.weight.detach().cpu().numpy()
+        weights = weights.detach().cpu().numpy()
         return loss, weights 
 
 

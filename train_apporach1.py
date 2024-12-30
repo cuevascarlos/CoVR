@@ -119,9 +119,9 @@ def train(model, train_loader, optimizer, fabric, epoch, cfg):
         fabric.backward(loss)
         optimizer.step()
         
-        multi_weight.append(comb_weights[0][0])
-        visual_weight.append(comb_weights[0][1])
-        text_weight.append(comb_weights[0][2])
+        multi_weight.append(comb_weights[0])
+        visual_weight.append(comb_weights[1])
+        text_weight.append(comb_weights[2])
         
 
         if batch_idx % cfg.trainer.print_interval == 0:
