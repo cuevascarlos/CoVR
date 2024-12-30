@@ -5,7 +5,10 @@ SPDX-License-Identifier: BSD-3-Clause
 For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
 
 Modified 27/12/2024
-Author: Carlos Cuevas Villarmin
+Authors: 
+- Carlos Cuevas Villarmin
+- Javier Alejandro Lopetegui Gonzalez
+
 """
 
 import logging
