@@ -190,8 +190,15 @@ class BLIP2Cir(Blip2Base):
         print(f"text_embs: {text_embs.shape}")
         print(f"query_si_feat: {query_si_feat.shape}")
 
-        combined_embedding = torch.stack([query_si_feat, visual_embs, text_embs], dim=-1)
-        output_embeddings = self.embedding_combination(combined_embedding).squeeze(-1)
+        weights = F.softmax(self.embedding_combination, dim=0)
+        combined_embedding = (query_si_feat * weights[0] +
+                      visual_embs * weights[1] +
+                      text_embs * weights[2])
+        print(f"combined_embedding: {combined_embedding.shape}")
+        output_embeddings = combined_embedding
+        # print(f"output_embeddings: {output_embeddings.shape}")
+        # combined_embedding = torch.stack([query_si_feat, visual_embs, text_embs], dim=-1)
+        # output_embeddings = self.embedding_combination(combined_embedding).squeeze(-1)
 
         # s=source, t=target, i=image, c=caption, w=weight
         loss = 0
@@ -208,7 +215,7 @@ class BLIP2Cir(Blip2Base):
             si_tc_loss = self.loss(output_embeddings, tar_txt_feat, self.temp)
             loss += si_tc_loss * self.si_tc_weight
             
-        loss += self.regularization_loss()
+        # loss += self.regularization_loss()
         weights = self.embedding_combination.weight.detach().cpu().numpy()
         return loss, weights 
 
