@@ -16,8 +16,8 @@ model:
 
 trainer:
   devices: 1
-  max_epochs: 1
-  save_ckpt: last
+  max_epochs: 2
+  save_ckpt: all
 
 
 val: False
