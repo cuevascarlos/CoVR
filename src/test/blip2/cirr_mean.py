@@ -89,7 +89,7 @@ class TestCirr:
                     tar_emb = F.normalize(
                         torch.load(target_emb_pth, weights_only=True).cpu(), dim=-1
                     )
-                    tar_emb = tar_emb.mean(dim=1)
+                    tar_emb = tar_emb.mean(dim=0)
                     id2emb[img_id] = tar_emb
 
             tar_feats = torch.stack(list(id2emb.values()), dim=0).to("cpu")

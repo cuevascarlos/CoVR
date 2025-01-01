@@ -1,5 +1,5 @@
 name: blip2-cirr-cutomize_3
 
-path: ${paths.dataset_dir}/CIRR/cirr_customize_3/cirr/blip2-coco/blip2-l-coco_coir+covr/tv-False_loss-hnnce_lr-0.0001/base/ckpt_last.ckpt
+path: ${paths.datasets_dir}/CIRR/cirr_customize_3/cirr/blip2-coco/blip2-l-coco_coir+covr/tv-False_loss-hnnce_lr-0.0001/base/ckpt_last.ckpt
 
 image_size: 364
