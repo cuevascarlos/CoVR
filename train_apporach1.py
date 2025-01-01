@@ -8,6 +8,8 @@ import lightning as L
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 
+from tqdm import tqdm
+
 from src.tools.files import json_dump
 from src.tools.utils import calculate_model_params
 
@@ -113,7 +115,7 @@ def train(model, train_loader, optimizer, fabric, epoch, cfg):
     model.train()
     
     multi_weight, visual_weight, text_weight = [], [], []
-    for batch_idx, batch in enumerate(train_loader):
+    for batch_idx, batch in tqdm(enumerate(train_loader)):
         optimizer.zero_grad()
         loss, comb_weights = model(batch, fabric)
         fabric.backward(loss)

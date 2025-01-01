@@ -59,7 +59,7 @@ class BLIP2Cir(Blip2Base):
         lambda_reg=0.1,
         si_ti_weight=1,
         si_tc_weight=0,
-        weights_initialization="average"
+        weights_initialization="not-image"
     ):
         super().__init__()
 
@@ -108,13 +108,19 @@ class BLIP2Cir(Blip2Base):
         # Define parameter weights for embeddings linear combination
         # self.embedding_combination = nn.Linear(3, 1, bias=False)
         # nn.init.constant_(self.embedding_combination.weight, 0.33)
+        self.embedding_combination=None
+        print("Initializing weights...")
         if weights_initialization == "average":
+            print("Initializing weights: average")
             self.embedding_combination = nn.Parameter(torch.full((3,), 0.33))  # Initialize weights as 0.33
         elif weights_initialization == "not-image":
+            print("Initializing weights: not-image")
             self.embedding_combination = nn.Parameter(torch.tensor([0.5, 0.0, 0.5]))
         else: #random
+            print("Initializing weights: random")
             self.embedding_combination = nn.Parameter(torch.rand(3))
-            
+        print("Initializing weights done...", self.embedding_combination)
+        
         # self.embedding_combination.weight.requires_grad = True
         self.lambda_reg = lambda_reg
 
@@ -203,9 +209,12 @@ class BLIP2Cir(Blip2Base):
 
         # weights = F.softmax(self.embedding_combination, dim=0)
         weights = self.embedding_combination
+        print("Combining embeddings...")
         combined_embedding = (query_si_feat * weights[0] +
                       visual_embs * weights[1] +
                       text_embs * weights[2])
+        print("Combining embeddings done...")
+ 
         # print(f"combined_embedding: {combined_embedding.shape}")
         output_embeddings = combined_embedding
         # print(f"output_embeddings: {output_embeddings.shape}")
