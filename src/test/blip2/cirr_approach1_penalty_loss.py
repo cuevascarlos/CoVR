@@ -78,7 +78,8 @@ class TestCirr:
             text_embs = text_si_feat.mean(dim=1)
 
             # Weighted embedding combination (multimodal, visual, text)
-            weights = F.softmax(model.embedding_combination, dim=0)
+            # weights = F.softmax(model.embedding_combination, dim=0)
+            weights = model.embedding_combination
             vl_feat = weights[0] * query_si_feat + weights[1] * visual_embs + weights[2] * text_embs
 
             vl_feats.append(vl_feat.cpu())

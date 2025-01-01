@@ -15,6 +15,7 @@ model:
   num_query_token: 32
   temperature: 0.07
   vit: "large"
+  weights_initialization: "average"
 
   loss: ${model.loss}
 
