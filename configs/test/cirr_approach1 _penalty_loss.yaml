@@ -1,4 +1,4 @@
-cirr_approach1:
+cirr_approach1_penalty_loss:
   dataname: cirr
   _target_: src.data.cirr.CIRRTestDataModule
 
