@@ -74,7 +74,7 @@ class TestCirr:
 
             # text embeddings
             txt_emb = output.last_hidden_state[:, query_tokens.size(1) :, :]
-            text_si_feat = F.normalize(model.text_emb_proj(txt_emb), dim=-1)
+            text_si_feat = F.normalize(model.text_proj(txt_emb), dim=-1)
             text_embs = text_si_feat.mean(dim=1)
 
             # Weighted embedding combination (multimodal, visual, text)
