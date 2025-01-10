@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -16,6 +17,20 @@ from lavis.models import load_model_and_preprocess
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+def preprocess_caption_json(data_path):
+    with open(data_path, "r") as f:
+        
+            data = json.load(f)
+            
+            if isinstance(data, dict):
+                data = [
+                    {"image": key, "caption": value}
+                    for key, value in data.items()
+                ]
+            
+            texts = list(set([item["caption"] for item in data]))
+            
+    return data, texts
 
 class TextDataset(Dataset):
     def __init__(
@@ -32,12 +47,7 @@ class TextDataset(Dataset):
                 texts = f.readlines()
             self.texts = [x.rstrip("\n") for x in set(texts)]
         elif data_path.suffix == ".json":
-            import json
-
-            with open(data_path, "r") as f:
-                texts = json.load(f)
-
-            self.texts = list(set([txt["caption"] for txt in texts]))
+            _, self.texts = preprocess_caption_json(data_path)
         self.texts.sort()
         self.txt_processors = txt_processors
 
@@ -93,8 +103,8 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("data_path", type=Path)
-    parser.add_argument("save_dir", type=Path)
+    parser.add_argument("--data_path", type=Path)
+    parser.add_argument("--save_dir", type=Path)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--num_workers", type=int, default=8)
     parser.add_argument(
