@@ -1,0 +1,5 @@
+name: blip2-l-coco-approach1_penalty_loss_not_image_init_e1
+
+path: ${paths.datasets_dir}/CIRR/cirr_approach1_penalty_loss_not_image_init/blip2-coco-approach1_penalty_loss/blip2-l-coco/tv-False_loss-hnnce_lr-0.0001/base/ckpt_1.ckpt
+
+image_size: 364
