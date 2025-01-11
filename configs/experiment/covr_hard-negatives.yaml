@@ -1,6 +1,0 @@
-# @package _global_
-
-defaults:
-  - override /data: webvid-covr.yaml
-  - override /test: main.yaml
-  - override /model/loss: cross_entropy

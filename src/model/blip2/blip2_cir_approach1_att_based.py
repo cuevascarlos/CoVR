@@ -55,7 +55,7 @@ class BLIP2Cir(Blip2Base):
         cross_attention_freq=2,
         embed_dim=256,
         max_txt_len=32,
-        temperature=0.7,
+        temperature=1,
         lambda_reg=0.1,
         si_ti_weight=1,
         si_tc_weight=0,
@@ -238,7 +238,7 @@ class BLIP2Cir(Blip2Base):
             weights_text_per_sample = []
 
             for BATCH_SAMPLE in range(query_si_feat.shape[0]):
-                queries_dist, text_dist = BLIP2Cir.compute_weights_based_on_attention_rollout(self_attentions, BATCH_INDEX, BATCH_SAMPLE, temp=self.temp)
+                queries_dist, text_dist = BLIP2Cir.compute_weights_based_on_attention_rollout(self_attentions, BATCH_INDEX, BATCH_SAMPLE, temp=0.7)
                 weights_queries_per_sample.append(queries_dist)
                 weights_text_per_sample.append(text_dist)
             
