@@ -55,11 +55,10 @@ class BLIP2Cir(Blip2Base):
         cross_attention_freq=2,
         embed_dim=256,
         max_txt_len=32,
-        temperature=1,
+        temperature=0.7,
         lambda_reg=0.1,
         si_ti_weight=1,
         si_tc_weight=0,
-        weights_initialization="not-image"
     ):
         super().__init__()
 
@@ -86,6 +85,8 @@ class BLIP2Cir(Blip2Base):
             if "_query" in name:
                 key_orig = name.replace("_query", "")
                 param.data.copy_(state_dict[key_orig])
+
+        self.temp = temperature
 
         self.vision_proj = nn.Linear(self.Qformer.config.hidden_size, embed_dim)
         self.text_proj = nn.Linear(self.Qformer.config.hidden_size, embed_dim)
@@ -132,11 +133,11 @@ class BLIP2Cir(Blip2Base):
         # attentions of dim [num_batches, num_layers, batch_size, num_heads, seq_len, seq_len]
         # Select the attention for the specified batch and the first layer
         attention = attentions[BATCH_INDEX, :, BATCH_SAMPLE]  # Shape: [num_layers, num_heads, seq_len, seq_len]
-        rollout = attention_rollout(attention)
+        rollout = BLIP2Cir.attention_rollout(attention)
         return rollout
 
     def compute_weights_based_on_attention_rollout(attentions, BATCH_INDEX, BATCH_SAMPLE, temp=1, threshold=0.01, return_logs = False):
-        rollout = attention_rollout_per_sample(attentions, BATCH_INDEX, BATCH_SAMPLE) #Dim: [num_layers, num_heads, seq_len, seq_len] 
+        rollout = BLIP2Cir.attention_rollout_per_sample(attentions, BATCH_INDEX, BATCH_SAMPLE) #Dim: [num_layers, num_heads, seq_len, seq_len] 
         # Average over last layer
         rollout_avg_last_layer = torch.mean(rollout[-1], dim=0) # Dim: [seq_len, seq_len]
 
@@ -220,7 +221,7 @@ class BLIP2Cir(Blip2Base):
         # Weighted embedding combination (multimodal, visual, text)
         # Make text embeddings and image embeddings the same size as multimodal embeddings
         txt_emb = output.last_hidden_state[:,query_tokens.size(1):, :]
-        text_si_feat = F.normalize(self.text_emb_proj(txt_emb), dim=-1)
+        text_si_feat = F.normalize(self.text_proj(txt_emb), dim=-1)
         text_embs = all_gather_with_grad(text_si_feat, fabric)
         
         # get attention information
@@ -236,14 +237,15 @@ class BLIP2Cir(Blip2Base):
             weights_queries_per_sample = []
             weights_text_per_sample = []
 
-            for BATCH_SAMPLE in range(len(self_attentions[0])):
-                queries_dist, text_dist = compute_weights_based_on_attention_rollout(self_attentions, BATCH_INDEX, BATCH_SAMPLE, temp=self.temp)
+            for BATCH_SAMPLE in range(query_si_feat.shape[0]):
+                queries_dist, text_dist = BLIP2Cir.compute_weights_based_on_attention_rollout(self_attentions, BATCH_INDEX, BATCH_SAMPLE, temp=self.temp)
                 weights_queries_per_sample.append(queries_dist)
                 weights_text_per_sample.append(text_dist)
             
-            weights_queries_per_sample = torch.stack(weights_queries_per_sample, dim=0).detach()
-            weights_text_per_sample = torch.stack(weights_text_per_sample, dim=0).detach()
-
+            weights_queries_per_sample = torch.stack(weights_queries_per_sample, dim=0).detach().to(device)
+            weights_text_per_sample = torch.stack(weights_text_per_sample, dim=0).detach().to(device)
+            # print(weights_queries_per_sample.shape)
+            # print(query_si_feat.shape)
             query_si_feat = torch.einsum("ij,ijk->ik", weights_queries_per_sample, query_si_feat)
             text_embs = torch.einsum("ij,ijk->ik", weights_text_per_sample, text_embs)
 
