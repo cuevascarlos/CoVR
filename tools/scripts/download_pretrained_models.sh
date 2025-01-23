@@ -108,8 +108,9 @@ choose_download_option_blip2() {
     echo -e "6) ${BLUE}CIRR (CC-CoIR)${NC}"
     echo -e "7) ${BLUE}FashionIQ (WebVid-CoVR + CC-CoIR)${NC}"
     echo -e "8) ${BLUE}FashionIQ (CC-CoIR)${NC}"
+    echo -e "9) ${BLUE}CIRR (q+text_emb_e2)"
     echo -e "Press Enter for default (${GREEN}All${NC})"
-    read -p "Enter your choice (1/2/3/4/5/6/7/8): " choice
+    read -p "Enter your choice (1/2/3/4/5/6/7/8/9): " choice
     case $choice in
         2) download2_covr_coir ;;
         3) download2_coir ;;
@@ -118,6 +119,7 @@ choose_download_option_blip2() {
         6) download2_cirr_coir ;;
         7) download2_fiq_covr_coir ;;
         8) download2_fiq_coir ;;
+        9) download2_cirr_q_t_e2 ;;
         *) download2_all ;;
     esac
 }
@@ -167,6 +169,13 @@ download2_fiq_coir() {
     url="https://huggingface.co/lucas-ventura/CoVR2/resolve/main/fashioniq-all-ft_coir.ckpt"
     dir="outputs/fashioniq-all/blip2-coco/blip2-l-coco_coir/tv-False_loss-hnnce_lr-0.0001/base/"
     filename="ckpt_5.ckpt"
+    download_checkpoint "$url" "$dir" "$filename"
+}
+
+download2_cirr_q_t_e2() {
+    url="https://huggingface.co/JavierLopetegui/CoIR-CoVR-BLIP-2/resolve/main/cirr_ft_q%2Btext_emb_e2.ckpt"
+    dir="outputs/cirr/blip2-coco/blip2-l-coco-approach1_penalty_loss/tv-False_loss-hnnce_lr-0.0001/base/"
+    filename="ckpt_1.ckpt"
     download_checkpoint "$url" "$dir" "$filename"
 }
 
